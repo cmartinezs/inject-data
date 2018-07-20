@@ -2,8 +2,11 @@ package cl.smartware.machali.service.impl;
 
 import java.io.File;
 
+import org.springframework.stereotype.Service;
+
 import cl.smartware.machali.service.DownloadService;
 
+@Service
 public class DownloadServiceImpl implements DownloadService {
 
 	@Override
