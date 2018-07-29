@@ -13,4 +13,8 @@ public interface SubmissionsValueService
 	public SubmissionsValue save(SubmissionsValue entity);
 	
 	public Iterable<SubmissionsValue> saveAll(Iterable<SubmissionsValue> entities);
+	
+	public void delete(SubmissionsValue entity);
+	
+	public void deleteAll(Iterable<SubmissionsValue> entities);
 }

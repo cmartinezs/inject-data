@@ -121,15 +121,15 @@ public class SubmissionsValue
 	{
 		ASUNTO("asunto", "motivo")
 		, LUGAR("lugar", "lugar")
-		, COMENTARIOS("comentarios", "")
-		, GEOMAPS("geomaps", "")
+		, COMENTARIOS("comentarios", null)
+		, GEOMAPS("geomaps", null)
 		, NOMBRE("nombre", "usuario")
 		, EMAIL("email", "email")
 		, TELEFONO("telefono", "telefonoContacto")
-		, EDAD("edad", "")
+		, EDAD("edad", null)
 		, RESULT("result", "archivo")
-		, TICKET("ticket", "")
-		, FORMID("formId", "")
+		, TICKET("ticket", null)
+		, FORMID("formId", null)
 		, DATESUBMITTED("DateSubmitted", "date");
 		
 		private String submissionsValueField;

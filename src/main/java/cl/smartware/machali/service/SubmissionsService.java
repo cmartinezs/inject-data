@@ -8,4 +8,6 @@ public interface SubmissionsService
 	public Submissions buildFromCSVItem(CSVItem item);
 	
 	public Submissions save(Submissions submission);
+	
+	public void delete(Submissions submission);
 }

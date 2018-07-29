@@ -5,9 +5,9 @@ import java.text.SimpleDateFormat;
 
 public class DateUtils
 {
-	public static final String DATE_FORMAT = "dd/MM/yyyy HH:mm";
+	public static final String DATE_FORMAT = "dd/MM/yyyy hh:mm";
 	
-	public static SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+	public static SimpleDateFormat SDF = new SimpleDateFormat(DATE_FORMAT);
 	
 	public static java.util.Date toDate(String date, String format) throws ParseException
 	{
@@ -16,9 +16,20 @@ public class DateUtils
 	
 	public static java.util.Date toDate(String date) throws ParseException
 	{
-		return toDate(date, sdf);
+		return toDate(date, SDF);
 	}
 	
+	public static String toString(long _date) throws ParseException
+	{
+		java.util.Date date = new java.util.Date(_date);
+		return toString(date, SDF);
+	}
+	
+	private static String toString(java.util.Date date, SimpleDateFormat sdf) 
+	{
+		return sdf.format(date);
+	}
+
 	public static java.util.Date toDate(String date, SimpleDateFormat format) throws ParseException
 	{
 		return format.parse(date);

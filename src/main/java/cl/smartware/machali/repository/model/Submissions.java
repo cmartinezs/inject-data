@@ -14,8 +14,6 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import org.hibernate.annotations.Type;
-
 @Entity
 @Table(name = "m4x4l1_rsform_submissions")
 public class Submissions
@@ -44,8 +42,7 @@ public class Submissions
 	@Column(name = "Lang", length = 255)
 	private String lang;
 
-	@Column(name = "confiremed", columnDefinition = "TINYINT")
-	@Type(type = "org.hibernate.type.NumericBooleanType")
+	@Column(name = "confirmed", columnDefinition = "BIT")
 	private boolean confirmed;
 
 	@Column(name = "SubmissionHash", length = 32)
@@ -58,6 +55,11 @@ public class Submissions
 	{
 		submissions.add(value);
 		return this;
+	}
+	
+	public void addAllValues(List<SubmissionsValue> submissions)
+	{
+		submissions.addAll(submissions);
 	}
 
 	/**

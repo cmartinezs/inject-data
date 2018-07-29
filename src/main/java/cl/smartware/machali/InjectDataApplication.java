@@ -1,15 +1,9 @@
 package cl.smartware.machali;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Calendar;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,17 +14,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
-import cl.smartware.machali.repository.model.Submissions;
-import cl.smartware.machali.repository.model.SubmissionsValue;
+import cl.smartware.machali.service.DownloadService;
 import cl.smartware.machali.service.SubmissionsService;
 import cl.smartware.machali.service.SubmissionsValueService;
+import cl.smartware.machali.utils.DateUtils;
 
 @SpringBootApplication
 public class InjectDataApplication
 {
 
-	// @Autowired
-	// private DownloadService downloadService;
+	@Autowired
+	private DownloadService downloadService;
 	
 	@Autowired
 	private SubmissionsService submissionsService;
@@ -48,51 +42,85 @@ public class InjectDataApplication
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx)
 	{
-		return args -> {
+		return args -> 
+		{
+			long initTime = 0;
+			long lastExecute = 0;
+			long waitTime = 60000;
+			long nextExecutionIn = 180000;
+			
+			LastExecutionCSV lastExecutionCSV = null;
 
-			final Function<String, CSVItem> mapToItem = (line) -> {
-				String[] p = line.split(";");// a CSV has comma separated lines
-				CSVItem item = new CSVItem();
-				item.setDate(p[0]);
-				item.setMotivo(p[1]);
-				item.setLugar(p[2]);
-				item.setArchivo(p[3]);
-				item.setUsuario(p[4]);
-				item.setEmail(p[5]);
-				item.setTelefonoContacto(p[6]);
-				item.setFecha(p[7]);
-				item.setHora(p[8]);
-				return item;
-			};
-			
-			// File file = downloadService.download("");
-			
-			LOGGER.info("Lectura de archivo");
-			
-			List<CSVItem> items = new ArrayList<>();
-			File inputF = new File("./files/export_allReply_iphone_22656189.csv");
-			InputStream inputFS = new FileInputStream(inputF);
-			BufferedReader br = new BufferedReader(new InputStreamReader(inputFS));
-			// skip the header of the csv
-			items = br.lines().skip(1).map(mapToItem).collect(Collectors.toList());
-			br.close();
-			
-			items.forEach((item) -> System.out.println(item));
-			
-			LOGGER.info("Guardado de archivo en base de datos");
-			
-			items.forEach(
-				(item) -> {
-					Submissions submission = submissionsService.buildFromCSVItem(item);
-					submission = submissionsService.save(submission);
+			do 
+			{
+				initTime = Calendar.getInstance().getTimeInMillis();
+				long timeElapsed = initTime - lastExecute;
+				
+				if(lastExecute > 0 && (timeElapsed <= nextExecutionIn)) 
+				{
+					LOGGER.info(MessageFormat.format("Esperando para próxima ejecución... {0}ms", nextExecutionIn - timeElapsed));
 					
-					LOGGER.info(MessageFormat.format("Submission id {0}", submission.getId()));
+					if(nextExecutionIn - timeElapsed <= 10000) 
+					{
+						waitTime = 1000;
+					}
+					else if(nextExecutionIn - timeElapsed <= 30000) 
+					{
+						waitTime = 10000;
+					}
 					
-					List<SubmissionsValue> values = submissionsValueService.buildFromCSVItem(item, submission);
-					submissionsValueService.saveAll(values);
+					Thread.sleep(waitTime);
+					
+					continue;
 				}
-			);
+				
+				LOGGER.info(MessageFormat.format("Iniciando proceso... {0}", DateUtils.toString(initTime)));
+				
+				ExecutorService executorService = Executors.newSingleThreadExecutor();
+				
+				if(lastExecutionCSV != null) 
+				{
+					LOGGER.info("Se eliminará la inserción del proceso anterior...");
+					
+					DeleteLastCSVInDataBase deleteLastCSVInDataBase = new DeleteLastCSVInDataBase();
+					deleteLastCSVInDataBase.setLastExecutionCSV(lastExecutionCSV);
+					deleteLastCSVInDataBase.setSubmissionsService(submissionsService);
+					deleteLastCSVInDataBase.setSubmissionsValueService(submissionsValueService);
+					executorService.execute(deleteLastCSVInDataBase);
+				}
+				else
+				{
+					LOGGER.info("Primera ejecución del proceso...");
+				}
+				
+				SaveCSVInDataBase saveCSVinDataBase = new SaveCSVInDataBase();
+				saveCSVinDataBase.setFilePath("./files/export_allReply_iphone_22656189.csv");
+				saveCSVinDataBase.setSubmissionsService(submissionsService);
+				saveCSVinDataBase.setSubmissionsValueService(submissionsValueService);
+				
+				executorService.execute(saveCSVinDataBase);
+				executorService.shutdown();
+				
+				int i = 0;
+				
+				do
+				{
+					LOGGER.info(MessageFormat.format("Ejecutando pool de threads... {0}", i++));
 
+					Thread.sleep(1000);
+				}
+				while(!executorService.isTerminated());
+				
+				lastExecutionCSV = new LastExecutionCSV();
+				lastExecutionCSV.setSubmissions(saveCSVinDataBase.getSubmissions());
+
+				lastExecute = Calendar.getInstance().getTimeInMillis();
+				
+				LOGGER.info(MessageFormat.format("Pool de threads finalizado... {0}", DateUtils.toString(lastExecute)));
+				
+				waitTime = 60000;
+			}
+			while(true);
 		};
 	}
 

@@ -6,16 +6,19 @@ import java.text.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import cl.smartware.machali.CSVItem;
+import cl.smartware.machali.repository.crud.SubmissionsCrudRepository;
 import cl.smartware.machali.repository.model.Submissions;
 import cl.smartware.machali.service.SubmissionsService;
 import cl.smartware.machali.utils.DateUtils;
 
+@Service
 public class SubmissionsServiceImpl implements SubmissionsService
 {
 	@Autowired
-	private SubmissionsService submissionsService;
+	private SubmissionsCrudRepository submissionsCrudRepository;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SubmissionsServiceImpl.class);
 	
@@ -35,7 +38,8 @@ public class SubmissionsServiceImpl implements SubmissionsService
 		}
 		catch (ParseException e)
 		{
-			LOGGER.warn(MessageFormat.format("No se ha podido convertir {0} a fecha", item.getDate()));
+			LOGGER.warn(MessageFormat.format("No se ha podido convertir {0} a fecha", item.getDate()), e);
+			return null;
 		}
 		
 		submission.setUserId(String.valueOf("0"));
@@ -48,7 +52,12 @@ public class SubmissionsServiceImpl implements SubmissionsService
 	@Override
 	public Submissions save(Submissions submission)
 	{
-		return submissionsService.save(submission);
+		return submissionsCrudRepository.save(submission);
+	}
+
+	@Override
+	public void delete(Submissions submission) {
+		submissionsCrudRepository.delete(submission);
 	}
 
 }
