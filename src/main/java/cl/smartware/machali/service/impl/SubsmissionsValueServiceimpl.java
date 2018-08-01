@@ -36,7 +36,7 @@ public class SubsmissionsValueServiceimpl implements SubmissionsValueService
 			if(field.getCsvField() != null)
 			{
 				SubmissionsValue value = new SubmissionsValue();
-				value.setFieldName(field.getCsvField());
+				value.setFieldName(field.getSubmissionsValueField());
 				value.setFieldValue(mapFieldValue(field, item));
 				value.setFormId(6);
 				value.setSubmission(submission);

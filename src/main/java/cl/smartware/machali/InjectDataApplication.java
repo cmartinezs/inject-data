@@ -94,7 +94,7 @@ public class InjectDataApplication
 				}
 				
 				SaveCSVInDataBase saveCSVinDataBase = new SaveCSVInDataBase();
-				saveCSVinDataBase.setFilePath("./files/export_allReply_iphone_22656189.csv");
+				saveCSVinDataBase.setFilePath("./files/export_allReply.csv");
 				saveCSVinDataBase.setSubmissionsService(submissionsService);
 				saveCSVinDataBase.setSubmissionsValueService(submissionsValueService);
 				
