@@ -2,6 +2,7 @@ package cl.smartware.machali.service.impl;
 
 import java.text.MessageFormat;
 import java.text.ParseException;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,11 @@ public class SubmissionsServiceImpl implements SubmissionsService
 	@Override
 	public void delete(Submissions submission) {
 		submissionsCrudRepository.delete(submission);
+	}
+
+	@Override
+	public Optional<Submissions> findById(Integer id) {
+		return submissionsCrudRepository.findById(id);
 	}
 
 }

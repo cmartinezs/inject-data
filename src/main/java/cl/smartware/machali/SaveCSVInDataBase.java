@@ -39,6 +39,8 @@ class SaveCSVInDataBase extends Thread
 	
 	private String filePath;
 	
+	private String csvSplit;
+	
 	private List<Submissions> submissions;
 
 	/* (non-Javadoc)
@@ -49,7 +51,7 @@ class SaveCSVInDataBase extends Thread
 	{	
 		final Function<String, CSVItem> mapToItem = (line) -> 
 		{
-			String[] p = line.split(";");// a CSV has comma separated lines
+			String[] p = line.split(csvSplit);
 			CSVItem item = new CSVItem();
 			item.setDate(CSVItemUtils.removeSurroundQuote(p[0]));
 			item.setMotivo(CSVItemUtils.removeSurroundQuote(p[1]));
@@ -88,7 +90,6 @@ class SaveCSVInDataBase extends Thread
 		} 
 		catch (IOException e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -106,12 +107,17 @@ class SaveCSVInDataBase extends Thread
 				{
 					submission = submissionsService.save(submission);
 				
-					LOGGER.info(MessageFormat.format("Submission id {0}", submission.getId()));
+					LOGGER.info(MessageFormat.format("Insertando Submission id {0}", submission.getId()));
 				
 					List<SubmissionsValue> submissionValues = submissionsValueService.buildFromCSVItem(item, submission);
 					submissionsValueService.saveAll(submissionValues);
 					
-					LOGGER.info(MessageFormat.format("SubmissionValues size: {0}", submissionValues.size()));
+					LOGGER.info(MessageFormat.format("A insertar {0} registros de SubmissionsValues", submissionValues.size()));
+					
+					submissionValues.forEach(submissionsValue -> {
+						LOGGER.info(MessageFormat.format("Insertando SubmissionValues id: {0}", submissionsValue.getId()));
+					});
+					
 					
 					submission.addAllValues(submissionValues);
 					
@@ -143,5 +149,13 @@ class SaveCSVInDataBase extends Thread
 
 	public List<Submissions> getSubmissions() {
 		return submissions;
+	}
+
+	public String getCsvSplit() {
+		return csvSplit;
+	}
+
+	public void setCsvSplit(String csvSplit) {
+		this.csvSplit = csvSplit;
 	}
 }

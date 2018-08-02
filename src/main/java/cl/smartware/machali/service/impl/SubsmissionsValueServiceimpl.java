@@ -74,6 +74,12 @@ public class SubsmissionsValueServiceimpl implements SubmissionsValueService
 			LOGGER.warn(MessageFormat.format("Error al ejecutar el método {0}", getGetMethodNameFromField(field)), e);
 		}
 		
+		if(field.equals(SubmissionsValueFieldNames.GEOMAPAS))
+		{
+			String iframe = "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6656.066581992951!2d-70.55392342452782!3d-33.474484023068044!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662ce209ff85e67%3A0x81e08693f444cfb0!2s"+value+"!5e0!3m2!1ses-419!2scl!4v1524636026559";
+			value = iframe;
+		}
+		
 		return value;
 	}
 

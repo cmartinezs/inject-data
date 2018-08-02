@@ -22,8 +22,15 @@ public class DeleteLastCSVInDataBase extends Thread {
 		LOGGER.info("Eliminando ejecución anterior...");
 		
 		lastExecutionCSV.getSubmissions().forEach(submission -> {
+			
+			submission.getSubmissionsValues().forEach(submissionsValue -> {
+				LOGGER.info(MessageFormat.format("Eliminando SubmissionValue id = {0}", submissionsValue.getId()));
+				submissionsValueService.delete(submissionsValue);
+			});
+			
+			submission.setSubmissionsValues(null);
+			
 			LOGGER.info(MessageFormat.format("Eliminando submission id = {0}", submission.getId()));
-			submissionsValueService.deleteAll(submission.getSubmissions());
 			submissionsService.delete(submission);
 		});
 		

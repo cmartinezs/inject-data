@@ -175,7 +175,9 @@ public class CSVItem
 		sb.append("{\n");
 		for (Field field : this.getClass().getDeclaredFields())
 		{
-			if(!first) sb.append("\t,");;
+			sb.append("\t");
+			
+			if(!first) sb.append(", ");
 			
 			try
 			{
@@ -183,6 +185,8 @@ public class CSVItem
 				Object obj = field.get(this);
 				
 				sb.append(name).append(" = ").append(obj).append("\n");
+				
+				if(first) first = false;
 			}
 			catch (IllegalArgumentException | IllegalAccessException e)
 			{

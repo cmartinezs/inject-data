@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -48,18 +49,18 @@ public class Submissions
 	@Column(name = "SubmissionHash", length = 32)
 	private String submissionHash;
 
-	@OneToMany(mappedBy = "submission")
-	private List<SubmissionsValue> submissions = new ArrayList<>();
+	@OneToMany(mappedBy = "submission", fetch = FetchType.EAGER)
+	private List<SubmissionsValue> submissionsValues = new ArrayList<>();
 
-	public Submissions addValue(SubmissionsValue value)
+	public Submissions addValue(SubmissionsValue submissionsValue)
 	{
-		submissions.add(value);
+		this.submissionsValues.add(submissionsValue);
 		return this;
 	}
 	
-	public void addAllValues(List<SubmissionsValue> submissions)
+	public void addAllValues(List<SubmissionsValue> submissionsValues)
 	{
-		submissions.addAll(submissions);
+		this.submissionsValues.addAll(submissionsValues);
 	}
 
 	/**
@@ -209,16 +210,16 @@ public class Submissions
 	/**
 	 * @return the submissions
 	 */
-	public List<SubmissionsValue> getSubmissions()
+	public List<SubmissionsValue> getSubmissionsValues()
 	{
-		return this.submissions;
+		return this.submissionsValues;
 	}
 
 	/**
-	 * @param submissions the submissions to set
+	 * @param submissionsValues the submissions to set
 	 */
-	public void setSubmissions(List<SubmissionsValue> values)
+	public void setSubmissionsValues(List<SubmissionsValue> values)
 	{
-		this.submissions = values;
+		this.submissionsValues = values;
 	}
 }

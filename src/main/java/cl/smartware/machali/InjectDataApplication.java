@@ -1,19 +1,34 @@
 package cl.smartware.machali;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.text.MessageFormat;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
+import cl.smartware.machali.repository.model.Submissions;
 import cl.smartware.machali.service.DownloadService;
 import cl.smartware.machali.service.SubmissionsService;
 import cl.smartware.machali.service.SubmissionsValueService;
@@ -32,6 +47,26 @@ public class InjectDataApplication
 	@Autowired
 	private SubmissionsValueService submissionsValueService;
 	
+	@Value("${app.csv.path}")
+	private String csvPath;
+	
+	@Value("${app.csv.split}")
+	private String csvSplit;
+	
+	@Value("${app.csv.file.last.execution}")
+	private String fileLastExecution;
+	
+	@Value("${app.csv.file.last.execution.split}")
+	private String fileLastExecutionSplit;
+	
+	@Value("${app.csv.next.execution}")
+	private long nextExecutionIn;
+	
+	@Value("${app.csv.number.of.executions}")
+	private long numberOfExecutions;
+	
+	private final long WAIT_TIME = 60000;
+	
 	private static final Logger LOGGER = LoggerFactory.getLogger(InjectDataApplication.class);
 
 	public static void main(String[] args)
@@ -44,12 +79,63 @@ public class InjectDataApplication
 	{
 		return args -> 
 		{
+			//Eliminacion ejecucion anterior del proceso, si existe
+			
+			File inputFile = new File(fileLastExecution);
+			
+			if(inputFile.exists())
+			{
+				LOGGER.info(MessageFormat.format("Se eliminará la inserción del proceso anterior guardada en el archivo {0}", fileLastExecution));
+				
+				InputStream inputStream = new FileInputStream(inputFile);
+				
+				BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+				
+				final Function<String, String[]> mapToItem = (line) -> 
+				{
+					return line.split(fileLastExecutionSplit);
+				};
+				
+				List<String[]> items = bufferedReader
+						.lines()
+						.map(mapToItem)
+						.collect(Collectors.toList());
+				
+				bufferedReader.close();
+				
+				String[] submissionsIds = items.get(0);
+				
+				for(String id: submissionsIds) 
+				{
+					if(id == null || id.isEmpty()) continue;
+					
+					Optional<Submissions> optionalSubmissions = submissionsService.findById(Integer.valueOf(id));
+					
+					if(optionalSubmissions.isPresent())
+					{
+						Submissions submissions = optionalSubmissions.get();
+						submissions.getSubmissionsValues().forEach(submissionsValue -> {
+							LOGGER.info(MessageFormat.format("Eliminando SubmissionValue id = {0}", submissionsValue.getId()));
+							submissionsValueService.delete(submissionsValue);
+						});
+						
+						submissions.setSubmissionsValues(null);
+						
+						LOGGER.info(MessageFormat.format("Eliminando submission id = {0}", submissions.getId()));
+						submissionsService.delete(submissions);
+					}
+					
+				}
+			}
+			
 			long initTime = 0;
 			long lastExecute = 0;
-			long waitTime = 60000;
-			long nextExecutionIn = 180000;
 			
 			LastExecutionCSV lastExecutionCSV = null;
+			
+			boolean executeAgain = true;
+			
+			long executions = 0;
 
 			do 
 			{
@@ -60,16 +146,7 @@ public class InjectDataApplication
 				{
 					LOGGER.info(MessageFormat.format("Esperando para próxima ejecución... {0}ms", nextExecutionIn - timeElapsed));
 					
-					if(nextExecutionIn - timeElapsed <= 10000) 
-					{
-						waitTime = 1000;
-					}
-					else if(nextExecutionIn - timeElapsed <= 30000) 
-					{
-						waitTime = 10000;
-					}
-					
-					Thread.sleep(waitTime);
+					Thread.sleep(WAIT_TIME);
 					
 					continue;
 				}
@@ -83,6 +160,7 @@ public class InjectDataApplication
 					LOGGER.info("Se eliminará la inserción del proceso anterior...");
 					
 					DeleteLastCSVInDataBase deleteLastCSVInDataBase = new DeleteLastCSVInDataBase();
+					deleteLastCSVInDataBase.setName("Eliminacion de CSV");
 					deleteLastCSVInDataBase.setLastExecutionCSV(lastExecutionCSV);
 					deleteLastCSVInDataBase.setSubmissionsService(submissionsService);
 					deleteLastCSVInDataBase.setSubmissionsValueService(submissionsValueService);
@@ -94,7 +172,9 @@ public class InjectDataApplication
 				}
 				
 				SaveCSVInDataBase saveCSVinDataBase = new SaveCSVInDataBase();
-				saveCSVinDataBase.setFilePath("./files/export_allReply.csv");
+				saveCSVinDataBase.setName("Guardado de CSV");
+				saveCSVinDataBase.setFilePath(csvPath);
+				saveCSVinDataBase.setCsvSplit(csvSplit);
 				saveCSVinDataBase.setSubmissionsService(submissionsService);
 				saveCSVinDataBase.setSubmissionsValueService(submissionsValueService);
 				
@@ -105,9 +185,9 @@ public class InjectDataApplication
 				
 				do
 				{
-					LOGGER.info(MessageFormat.format("Ejecutando pool de threads... {0}", i++));
+					LOGGER.info(MessageFormat.format("Esperando la finalización del proceso... Cuenta en {0}", i++));
 
-					Thread.sleep(1000);
+					Thread.sleep(5000);
 				}
 				while(!executorService.isTerminated());
 				
@@ -116,11 +196,41 @@ public class InjectDataApplication
 
 				lastExecute = Calendar.getInstance().getTimeInMillis();
 				
-				LOGGER.info(MessageFormat.format("Pool de threads finalizado... {0}", DateUtils.toString(lastExecute)));
+				LOGGER.info(MessageFormat.format("Ejecución finalizada... {0}", DateUtils.toString(lastExecute)));
 				
-				waitTime = 60000;
+				if(numberOfExecutions > 0)
+				{
+					executions++;
+					
+					executeAgain = numberOfExecutions != executions;
+				}
+				
+				if(executeAgain)
+				{
+					LOGGER.info("Se realizará una nueva ejecucción de forma consecutiva");
+				}
+				else
+				{
+					LOGGER.info("Guardando archivo con registros de ultima ejecución procesada....");
+					
+					File outputFile = new File(fileLastExecution);
+					OutputStream outputStream = new FileOutputStream(outputFile);
+					BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
+					
+					StringBuffer sb = new StringBuffer();
+					
+					lastExecutionCSV.getSubmissions().forEach(submission -> {
+						sb.append(submission.getId()).append(fileLastExecutionSplit);
+					});
+					
+					bufferedWriter.write(sb.toString());
+					bufferedWriter.flush();
+					bufferedWriter.close();
+					
+					LOGGER.info("No hay más ejecucciones, fin del proceso.");
+				}
 			}
-			while(true);
+			while(executeAgain);
 		};
 	}
 
