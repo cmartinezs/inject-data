@@ -60,7 +60,13 @@
 						<phase>package</phase>
 						<configuration>
 							<target>
-								<echo>ANT TASK - copying files....</echo>
+								<echo>Creating exec file for ${project.build.finalName}.jar ....</echo>
+								<echo file="${basedir}/exec.cmd">
+@echo off
+chcp 65001
+java -jar -Dfile.encoding=UTF-8 ${project.build.finalName}.jar
+								</echo>
+								<echo>Copy files to distribution package ....</echo>
 								<copy todir="${basedir}/dist/config" overwrite="true" flatten="true">
 									<fileset dir="${basedir}">
 										<include name="config/*.*" />
