@@ -60,33 +60,30 @@
 						<phase>package</phase>
 						<configuration>
 							<target>
+								<delete dir="${basedir}/dist" verbose="true"/>
 								<echo>Creating exec file for ${project.build.finalName}.jar ....</echo>
-								<echo file="${basedir}/exec.cmd">
+								<echo file="${basedir}/dist/exec.cmd">
 @echo off
 chcp 65001
 java -jar -Dfile.encoding=UTF-8 ${project.build.finalName}.jar
 								</echo>
 								<echo>Copy files to distribution package ....</echo>
-								<copy todir="${basedir}/dist/config" overwrite="true" flatten="true">
+								<copy todir="${basedir}/dist/config" overwrite="true" flatten="true" verbose="true">
 									<fileset dir="${basedir}">
 										<include name="config/*.*" />
 									</fileset>
 								</copy>
-								<copy todir="${basedir}/dist/files" overwrite="true" flatten="true">
+								<copy todir="${basedir}/dist/files" overwrite="true" flatten="true" verbose="true">
 									<fileset dir="${basedir}">
 										<include name="files/*.*" />
 									</fileset>
 								</copy>
-								<copy todir="${basedir}/dist" overwrite="true" flatten="true">
+								<copy todir="${basedir}/dist" overwrite="true" flatten="true" verbose="true">
 									<fileset dir="${basedir}">
 										<include name="target/*.jar" />
 									</fileset>
 								</copy>
-								<copy todir="${basedir}/dist" overwrite="true" flatten="true">
-									<fileset dir="${basedir}">
-										<include name="exec.cmd" />
-									</fileset>
-								</copy>
+								<zip destfile="${basedir}/dist/${project.build.finalName}.zip" basedir="${basedir}/dist" excludes="dont*.*"/>
 							</target>
 						</configuration>
 						<goals>
@@ -97,6 +94,4 @@ java -jar -Dfile.encoding=UTF-8 ${project.build.finalName}.jar
 			</plugin>
 		</plugins>
 	</build>
-
-
 </project>

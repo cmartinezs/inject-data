@@ -124,7 +124,13 @@ public class InjectDataApplication
 						LOGGER.info(MessageFormat.format("Eliminando submission id = {0}", submissions.getId()));
 						submissionsService.delete(submissions);
 					}
-					
+				}
+				
+				inputStream.close();
+				
+				if(inputFile.delete())
+				{
+					LOGGER.info(MessageFormat.format("Archvio {0} eliminado", inputFile.getName()));
 				}
 			}
 			
