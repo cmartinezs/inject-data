@@ -80,7 +80,7 @@ public class InjectDataApplication
 		return args -> 
 		{
 			//Eliminacion ejecucion anterior del proceso, si existe
-			
+
 			File inputFile = new File(fileLastExecution);
 			
 			if(inputFile.exists())
@@ -158,7 +158,7 @@ public class InjectDataApplication
 				}
 				
 				LOGGER.info(MessageFormat.format("Iniciando proceso... {0}", DateUtils.toString(initTime)));
-				
+
 				ExecutorService executorService = Executors.newSingleThreadExecutor();
 				
 				if(lastExecutionCSV != null) 
@@ -176,7 +176,50 @@ public class InjectDataApplication
 				{
 					LOGGER.info("Primera ejecución del proceso...");
 				}
+
+				/*Response loginPageResponse = 
+	                    Jsoup.connect("https://app.machali.cl/manage")
+	                    .referrer("https://app.machali.cl/manage")
+	                    .userAgent("Mozilla/5.0")
+	                    .timeout(10 * 1000)
+	                    .followRedirects(true)
+	                    .execute();
 				
+				Map<String, String> mapLoginPageCookies = loginPageResponse.cookies();
+				
+				Map<String, String> mapParams = new HashMap<String, String>();
+	            mapParams.put("identification", "true");
+	            mapParams.put("seclogin", "on");
+	            mapParams.put("login", "soporte@dnet.cl");
+	            mapParams.put("password", "P0o9i8u7");
+	            mapParams.put("submit", "Conexión");
+				
+				Response postLogin = 
+						Jsoup.connect("https://app.machali.cl/manage")
+						.referrer("https://app.machali.cl/manage")
+	                    .userAgent("Mozilla/5.0")
+	                    .timeout(10 * 1000)
+						.data(mapParams)
+						.cookies(mapLoginPageCookies)
+				        .method(Method.POST)
+	                    .followRedirects(true)
+				        .execute();
+				
+				Map<String, String> loginCookies = postLogin.cookies();
+				
+				Response fileResponse = 
+						Jsoup.connect("https://app.machali.cl/manage/cms/form/21766351/allReply?csv=1")
+						.referrer("https://app.machali.cl/manage")
+	                    .userAgent("Mozilla/5.0")
+	                    .timeout(10 * 1000)
+	                    .cookies(loginCookies)
+	                    .followRedirects(true)
+	                    .execute();
+				
+				FileOutputStream out = (new FileOutputStream(new File(csvPath)));
+				out.write(fileResponse.bodyAsBytes());
+				out.close();*/
+
 				SaveCSVInDataBase saveCSVinDataBase = new SaveCSVInDataBase();
 				saveCSVinDataBase.setName("Guardado de CSV");
 				saveCSVinDataBase.setFilePath(csvPath);
